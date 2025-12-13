@@ -44,13 +44,28 @@
       width:100%;
       max-width:1120px;
       background:rgba(255,255,255,.9);
-      border-radius:28px;
+      backdrop-filter:blur(18px);
+      border-radius:32px;
       border:1px solid rgba(209,213,219,.8);
-      box-shadow:0 26px 70px rgba(15,23,42,.18);
+      box-shadow:0 28px 80px rgba(15,23,42,.22);
       padding:18px 18px 20px;
       display:grid;
       grid-template-columns:1.2fr 1.4fr;
       gap:18px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .shell::before{
+      content:"";
+      position:absolute;
+      inset:-120px;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(163,230,207,.40) 0, transparent 55%),
+        radial-gradient(circle at 120% 20%, rgba(252,211,77,.40) 0, transparent 55%);
+      opacity:.35;
+      pointer-events:none;
+      z-index:-1;
     }
 
     /* HEADER */
@@ -70,20 +85,26 @@
     }
 
     .logo-circle{
-      width:46px;
-      height:46px;
+      width:48px;
+      height:48px;
       border-radius:18px;
       background:radial-gradient(circle at 20% 0,#ffffff,#e0f7ec);
       display:flex;
       align-items:center;
       justify-content:center;
-      box-shadow:0 12px 30px rgba(15,118,110,.35);
+      box-shadow:0 14px 34px rgba(15,118,110,.40);
       overflow:hidden;
+      animation:floatLogo 6s ease-in-out infinite;
     }
     .logo-circle img{
       max-width:80%;
       height:auto;
       display:block;
+    }
+
+    @keyframes floatLogo{
+      0%,100%{transform:translateY(0);}
+      50%{transform:translateY(-4px);}
     }
 
     .logo-text{
@@ -101,10 +122,18 @@
 
     .logo-text strong{
       font-family:"Cormorant Garamond",serif;
-      font-size:1.5rem;
-      letter-spacing:.2em;
+      font-size:1.6rem;
+      letter-spacing:.20em;
       text-transform:uppercase;
       color:#145a4a;
+    }
+
+    .header-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
 
     .header-tag{
@@ -116,10 +145,51 @@
       display:inline-flex;
       align-items:center;
       gap:6px;
+      box-shadow:0 8px 20px rgba(45,212,191,.35);
     }
 
     .header-tag i{
       font-size:.8rem;
+    }
+
+    .user-chip{
+      font-size:.74rem;
+      padding:4px 9px 4px 4px;
+      border-radius:999px;
+      background:rgba(15,23,42,.02);
+      border:1px solid rgba(148,163,184,.45);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      box-shadow:0 8px 22px rgba(15,23,42,.22);
+    }
+
+    .user-avatar{
+      width:24px;
+      height:24px;
+      border-radius:999px;
+      background:linear-gradient(135deg,#4BAF8C,#22c55e);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#ecfdf5;
+      font-size:.8rem;
+      font-weight:600;
+    }
+
+    .user-info{
+      display:flex;
+      flex-direction:column;
+      line-height:1.15;
+    }
+
+    .user-info strong{
+      font-size:.76rem;
+      color:#022c22;
+    }
+    .user-info span{
+      font-size:.7rem;
+      color:#6b7280;
     }
 
     /* COLUMNA IZQUIERDA: hero + formulario */
@@ -129,8 +199,23 @@
       gap:10px;
     }
 
+    .hero-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:.72rem;
+      padding:4px 10px;
+      border-radius:999px;
+      background:rgba(15,118,110,.06);
+      color:#065f46;
+      margin-bottom:6px;
+    }
+    .hero-pill i{
+      font-size:.8rem;
+    }
+
     .hero-title{
-      font-size:1.35rem;
+      font-size:1.45rem;
       line-height:1.2;
       color:#022c22;
       margin-bottom:4px;
@@ -163,6 +248,7 @@
       align-items:center;
       gap:6px;
       color:#4b5563;
+      box-shadow:0 8px 18px rgba(148,163,184,.20);
     }
 
     .step-pill span{
@@ -180,16 +266,32 @@
 
     .panel-form{
       margin-top:4px;
-      background:#f9fafb;
-      border-radius:16px;
-      padding:10px 10px 11px;
+      background:linear-gradient(145deg,#f9fafb,#fdfcfb);
+      border-radius:18px;
+      padding:12px 12px 13px;
       border:1px solid #e5e7eb;
-      box-shadow:0 14px 32px rgba(148,163,184,.22);
+      box-shadow:0 18px 40px rgba(148,163,184,.26);
       font-size:.78rem;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .panel-form::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:radial-gradient(circle at 0 -40%,rgba(74,222,128,.25),transparent 55%);
+      opacity:.55;
+      pointer-events:none;
+    }
+
+    .panel-form-inner{
+      position:relative;
+      z-index:1;
     }
 
     .panel-form h2{
-      font-size:.95rem;
+      font-size:.97rem;
       margin-bottom:3px;
       color:#111827;
     }
@@ -220,13 +322,14 @@
       background:#ffffff;
       outline:none;
       font-family:inherit;
-      transition:border-color .15s, box-shadow .15s, background .15s;
+      transition:border-color .15s, box-shadow .15s, background .15s, transform .08s;
     }
 
     input:focus, select:focus{
       border-color:var(--verde-savia);
       box-shadow:0 0 0 1px rgba(74,222,128,.45);
       background:#f9fffd;
+      transform:translateY(-1px);
     }
 
     .grid-2{
@@ -246,21 +349,24 @@
       cursor:pointer;
       color:#ffffff;
       background:linear-gradient(135deg,var(--verde-savia),var(--verde-oscuro));
-      box-shadow:0 14px 32px rgba(15,118,110,.45);
+      box-shadow:0 16px 38px rgba(15,118,110,.55);
       display:flex;
       align-items:center;
       justify-content:center;
       gap:6px;
+      transition:transform .1s, box-shadow .1s, filter .1s;
     }
 
     .btn-primary:hover{
       filter:brightness(1.05);
+      transform:translateY(-1px);
+      box-shadow:0 20px 46px rgba(15,118,110,.60);
     }
 
     .tiny-note{
       font-size:.72rem;
       color:#9ca3af;
-      margin-top:3px;
+      margin-top:5px;
     }
 
     /* COLUMNA DERECHA: LISTA DE NEGOCIOS */
@@ -275,16 +381,43 @@
       justify-content:space-between;
       align-items:center;
       gap:8px;
+      margin-bottom:2px;
     }
 
     .right-header h2{
-      font-size:.95rem;
+      font-size:.98rem;
       color:#111827;
     }
 
     .right-header span{
       font-size:.75rem;
       color:#6b7280;
+    }
+
+    .right-meta{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      font-size:.74rem;
+    }
+
+    .counter-chip{
+      padding:4px 8px;
+      border-radius:999px;
+      background:#ecfdf5;
+      border:1px solid #bbf7d0;
+      color:#065f46;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    .counter-chip i{
+      font-size:.8rem;
+    }
+    .counter-chip strong{
+      font-size:.8rem;
     }
 
     .negocios-list{
@@ -299,15 +432,23 @@
 
     .neg-card{
       border-radius:16px;
-      padding:8px 9px;
-      background:#ffffff;
+      padding:9px 10px;
+      background:linear-gradient(135deg,#ffffff,#f9fafb);
       border:1px solid #e5e7eb;
-      box-shadow:0 10px 24px rgba(148,163,184,.22);
+      box-shadow:0 12px 28px rgba(148,163,184,.24);
       display:flex;
       flex-direction:column;
       gap:4px;
       font-size:.78rem;
       position:relative;
+      transition:transform .1s, box-shadow .1s, border-color .1s, background .15s;
+    }
+
+    .neg-card:hover{
+      transform:translateY(-2px);
+      box-shadow:0 18px 40px rgba(148,163,184,.30);
+      border-color:rgba(74,222,128,.45);
+      background:linear-gradient(135deg,#ffffff,#ecfdf5);
     }
 
     .neg-tag{
@@ -352,6 +493,7 @@
       gap:5px;
       color:#374151;
       background:#f9fafb;
+      transition:background .1s, transform .1s, box-shadow .1s, border-color .1s;
     }
 
     .neg-btn.primary{
@@ -359,6 +501,18 @@
       background:linear-gradient(135deg,#22c55e,#16a34a);
       color:#ffffff;
       box-shadow:0 10px 24px rgba(22,163,74,.55);
+    }
+
+    .neg-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 12px 30px rgba(148,163,184,.28);
+      border-color:rgba(148,163,184,.8);
+      background:#ffffff;
+    }
+
+    .neg-btn.primary:hover{
+      box-shadow:0 14px 34px rgba(22,163,74,.65);
+      filter:brightness(1.05);
     }
 
     .neg-btn i{
@@ -387,11 +541,15 @@
       }
       .shell{
         padding:14px 12px 16px;
-        border-radius:22px;
+        border-radius:26px;
       }
       .header{
         flex-direction:column;
         align-items:flex-start;
+      }
+      .header-right{
+        align-self:stretch;
+        justify-content:space-between;
       }
       .grid-2{
         grid-template-columns:1fr;
@@ -414,84 +572,136 @@
         <strong>SAVIA</strong>
       </div>
     </div>
-    <div class="header-tag">
-      <i class="fa-regular fa-circle-check"></i>
-      Un panel para todos tus negocios
+
+    <div class="header-right">
+      <div class="header-tag">
+        <i class="fa-regular fa-circle-check"></i>
+       Nosotras Podemos jejeje!!
+      </div>
+      <div class="user-chip">
+        <div class="user-avatar">S</div>
+        <div class="user-info">
+          <strong>Erika-Natalia</strong>
+          <span>Panel central Savia</span>
+        </div>
+      </div>
     </div>
   </header>
 
   <!-- IZQUIERDA -->
   <section class="left">
     <div>
+      <div class="hero-pill">
+        <i class="fa-solid fa-seedling"></i>
+        Panel general de negocios Savia
+      </div>
       <h1 class="hero-title">
         Savia organiza tu tiempo,<br>
         <span>vos hacés crecer tu negocio.</span>
       </h1>
       <p class="hero-text">
-        Desde este panel vas a administrar todas tus estéticas, consultorios o emprendimientos.
         Cada tarjeta es un negocio con su propio panel profesional y link de turnos para clientas.
       </p>
       <div class="hero-steps">
-        <div class="step-pill"><span>1</span> Cargás tus datos</div>
-        <div class="step-pill"><span>2</span> Compartís el link de turnos</div>
-        <div class="step-pill"><span>3</span> Usás el panel día a día</div>
+        <div class="step-pill"><span>1</span> Cargás Datos</div>
+        <div class="step-pill"><span>2</span> Compartís el link </div>
+        <div class="step-pill"><span>3</span> Usás el panel</div>
       </div>
     </div>
 
     <!-- FORM NUEVO NEGOCIO -->
     <div class="panel-form">
-      <h2>Crear un nuevo negocio</h2>
-      <p>Completá estos datos y Savia genera el panel y los links para este negocio.</p>
+      <div class="panel-form-inner">
+        <h2>Crear un nuevo negocio</h2>
+        <p>Completá estos datos y Savia genera el panel y los links para este negocio.</p>
 
-      <form id="form-negocio">
-        <div class="field-group">
-          <label for="neg-nombre">Nombre comercial</label>
-          <input id="neg-nombre" type="text" placeholder="Ej: Estética Bellezza" required>
-        </div>
-
-        <div class="grid-2">
+        <form id="form-negocio">
           <div class="field-group">
-            <label for="neg-id">ID / dirección corta (sin espacios)</label>
-            <input id="neg-id" type="text" placeholder="ej: bellezza" required>
+            <label for="neg-nombre">Nombre comercial</label>
+            <input id="neg-nombre" type="text" placeholder="Ej: Estética Bellezza" required>
           </div>
+
+          <div class="grid-2">
+            <div class="field-group">
+              <label for="neg-id">ID / dirección corta (sin espacios)</label>
+              <input id="neg-id" type="text" placeholder="ej: bellezza" required>
+            </div>
+            <div class="field-group">
+              <label for="neg-rubro">Rubro</label>
+              <select id="neg-rubro">
+                <option value="Estética · Uñas · Masajes">Estética · Uñas · Masajes</option>
+                <option value="Consultorio psicológico">Consultorio psicológico</option>
+                <option value="Peluquería y barbería">Peluquería y barbería</option>
+                <option value="Bienestar & terapias">Bienestar & terapias</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+          </div>
+
           <div class="field-group">
-            <label for="neg-rubro">Rubro</label>
-            <select id="neg-rubro">
-              <option value="Estética · Uñas · Masajes">Estética · Uñas · Masajes</option>
-              <option value="Consultorio psicológico">Consultorio psicológico</option>
-              <option value="Peluquería y barbería">Peluquería y barbería</option>
-              <option value="Bienestar & terapias">Bienestar & terapias</option>
-              <option value="Otro">Otro</option>
-            </select>
+            <label for="neg-slogan">Slogan o frase corta</label>
+            <input id="neg-slogan" type="text" placeholder="Ej: Belleza con un clic.">
           </div>
-        </div>
 
-        <div class="grid-2">
           <div class="field-group">
-            <label for="neg-whatsapp">WhatsApp del negocio</label>
-            <input id="neg-whatsapp" type="tel" placeholder="Ej: 2613 38-7305">
+            <label for="neg-direccion">Dirección</label>
+            <input id="neg-direccion" type="text" placeholder="Ej: San Martín 123">
           </div>
+
           <div class="field-group">
-            <label for="neg-instagram">Instagram (usuario o link)</label>
-            <input id="neg-instagram" type="text" placeholder="@mi_estetica">
+            <label for="neg-ciudad">Ciudad / localidad</label>
+            <input id="neg-ciudad" type="text" placeholder="Ej: Maipú · Mendoza">
           </div>
-        </div>
 
-        <div class="field-group">
-          <label for="neg-color">Color principal (demo)</label>
-          <input id="neg-color" type="color" value="#4BAF8C">
-        </div>
+          <div class="grid-2">
+            <div class="field-group">
+              <label for="neg-whatsapp">WhatsApp del negocio</label>
+              <input id="neg-whatsapp" type="tel" placeholder="Ej: 2613 38-7305">
+            </div>
+            <div class="field-group">
+              <label for="neg-instagram">Instagram (usuario o link)</label>
+              <input id="neg-instagram" type="text" placeholder="@mi_estetica">
+            </div>
+          </div>
 
-        <button type="submit" class="btn-primary">
-          <i class="fa-regular fa-square-plus"></i>
-          Crear negocio en Savia
-        </button>
-      </form>
+          <div class="grid-2">
+            <div class="field-group">
+              <label for="neg-facebook">Facebook (usuario o link)</label>
+              <input id="neg-facebook" type="text" placeholder="Ej: /mi.estetica">
+            </div>
+            <div class="field-group">
+              <label for="neg-maps">Link de Google Maps (opcional)</label>
+              <input id="neg-maps" type="text" placeholder="URL de Maps">
+            </div>
+          </div>
 
-      <p class="tiny-note">
-        En la versión real, estos datos se guardan en Firebase y los toman
-        <strong>admin.html</strong> y <strong>turnos.html</strong> según el ID del negocio.
-      </p>
+          <div class="field-group">
+            <label for="neg-horarios">Horarios resumidos</label>
+            <input id="neg-horarios" type="text"
+                   placeholder="Ej: Lun a vie 9 a 20 hs · Sáb 9 a 13 hs">
+          </div>
+
+          <div class="field-group">
+            <label for="neg-logo">URL del logo (opcional)</label>
+            <input id="neg-logo" type="text" placeholder="Ej: img/bellezza-logo.png">
+          </div>
+
+          <div class="field-group">
+            <label for="neg-color">Color principal (demo)</label>
+            <input id="neg-color" type="color" value="#4BAF8C">
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <i class="fa-regular fa-square-plus"></i>
+            Crear negocio en Savia
+          </button>
+        </form>
+
+        <p class="tiny-note">
+          Estos datos se guardan en la base de datos y los leen
+          <strong>admin.html</strong> y <strong>turnos.html</strong> según el ID del negocio.
+        </p>
+      </div>
     </div>
   </section>
 
@@ -501,6 +711,13 @@
       <div>
         <h2>Mis negocios en Savia</h2>
         <span>Elegí uno para ver el panel profesional o el link de reservas.</span>
+      </div>
+      <div class="right-meta">
+        <div class="counter-chip">
+          <i class="fa-solid fa-store"></i>
+          <span>Negocios activos:</span>
+          <strong id="negocios-count">0</strong>
+        </div>
       </div>
     </div>
 
@@ -547,6 +764,7 @@
 
   const form = document.getElementById("form-negocio");
   const list = document.getElementById("negocios-list");
+  const negociosCountEl = document.getElementById("negocios-count");
 
   // Render de tarjetas
   function renderNegocioCard(id, data){
@@ -556,21 +774,27 @@
     const color = data.colorPrincipal || "#4BAF8C";
     const rubro = data.rubro || "Rubro sin definir";
     const nombre = data.nombre || id;
+    const direccionLinea =
+      (data.direccion || "Dirección a confirmar") +
+      (data.ciudad ? " · " + data.ciudad : "");
 
     card.innerHTML = `
       <div class="neg-tag">ID: ${id}</div>
       <div class="neg-name">${nombre}</div>
       <div class="neg-line">${rubro}</div>
       <div class="neg-line" style="font-size:.74rem;">
+        ${direccionLinea}
+      </div>
+      <div class="neg-line" style="font-size:.74rem;">
         <strong>WhatsApp:</strong> ${data.whatsapp || "—"}
         &nbsp;·&nbsp;
-        <strong>Instagram:</strong> ${data.instagram || "—"}
+        <strong>Instagram:</strong> ${data.instagram ? data.instagram : "—"}
       </div>
       <div class="neg-links">
-        <a href="admin.html?negocio=${encodeURIComponent(id)}" class="neg-btn primary">
+        <a href="admin.html?negocio=${encodeURIComponent(id)}" class="neg-btn primary" target="_blank" rel="noopener">
           <i class="fa-regular fa-calendar-check"></i> Panel profesional
         </a>
-        <a href="turnos.html?negocio=${encodeURIComponent(id)}" class="neg-btn">
+        <a href="turnos.html?negocio=${encodeURIComponent(id)}" class="neg-btn" target="_blank" rel="noopener">
           <i class="fa-solid fa-link"></i> Link para clientas
         </a>
       </div>
@@ -587,6 +811,11 @@
 
   onSnapshot(q, (snapshot)=>{
     list.innerHTML = "";
+
+    if(negociosCountEl){
+      negociosCountEl.textContent = snapshot.size || 0;
+    }
+
     if(snapshot.empty){
       const p = document.createElement("p");
       p.className = "sin-negocios";
@@ -607,8 +836,16 @@
     let id = document.getElementById("neg-id").value.trim().toLowerCase();
     const rubro = document.getElementById("neg-rubro").value;
     const whatsapp = document.getElementById("neg-whatsapp").value.trim();
-    const instagram = document.getElementById("neg-instagram").value.trim();
+    let instagram = document.getElementById("neg-instagram").value.trim();
+    let facebook = document.getElementById("neg-facebook").value.trim();
     const color = document.getElementById("neg-color").value || "#4BAF8C";
+
+    const slogan = document.getElementById("neg-slogan").value.trim();
+    const direccion = document.getElementById("neg-direccion").value.trim();
+    const ciudad = document.getElementById("neg-ciudad").value.trim();
+    const mapsUrl = document.getElementById("neg-maps").value.trim();
+    const horariosResumen = document.getElementById("neg-horarios").value.trim();
+    const logoUrl = document.getElementById("neg-logo").value.trim();
 
     if(!nombre || !id){
       alert("Completá al menos el nombre y el ID del negocio.");
@@ -627,15 +864,37 @@
       return;
     }
 
+    // Normalizar Instagram / Facebook a links si sólo ponen usuario
+    let instagramUrl = instagram;
+    if(instagramUrl && !instagramUrl.startsWith("http")){
+      instagramUrl = "https://www.instagram.com/" + instagramUrl.replace(/^@/,"");
+    }
+
+    let facebookUrl = facebook;
+    if(facebookUrl && !facebookUrl.startsWith("http")){
+      facebookUrl = "https://www.facebook.com/" + facebookUrl.replace(/^@/,"");
+    }
+
     const negocioDoc = doc(db, "negocios", id);
 
     const data = {
       nombre,
       slug:id,
       rubro,
+      slogan,
+      direccion,
+      ciudad,
       whatsapp,
-      instagram,
+      instagram: instagramUrl,
+      facebook: facebookUrl,
       colorPrincipal:color,
+      horariosResumen:horariosResumen,
+      logoUrl,
+      mapsUrl,
+      apertura:"09:00",
+      cierre:"20:00",
+      duracionMin:30,
+      aliasPago:"",
       creadoEn: serverTimestamp()
     };
 
@@ -653,3 +912,4 @@
 
 </body>
 </html>
+

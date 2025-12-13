@@ -663,6 +663,28 @@
         height:50px;
       }
     }
+    .header-logo{
+  width:78px;
+  height:68px;
+  border-radius:22px;
+  background:#ffffff00;                    /* fondo blanco neutro */
+  border:1px solid rgba(148,163,184,.45);
+  box-shadow:0 14px 32px rgba(15,23,42,.22);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:6px;                           /* respirito alrededor del logo */
+  overflow:hidden;
+  flex-shrink:0;
+}
+
+.header-logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;                    /* se adapta sin cortarse */
+  display:block;
+}
+
   </style>
 </head>
 <body>
@@ -827,10 +849,10 @@
     <footer>
       <div class="footer-logo">
         <img src="img/logo_transparent_background.png" alt="Logo Savia">
-        <span>Sistema de turnos desarrollado por SAVIA</span>
+        <a href="https://namilo1315.github.io/savia/"><span>Sistema de turnos desarrollado por SAVIA</span></a>
       </div>
-      <a href="#" id="bk-link-savia" target="_blank" rel="noopener">
-        Ver más sobre Savia
+      
+        
       </a>
     </footer>
   </div>
