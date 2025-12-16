@@ -425,10 +425,13 @@
       display:grid;
       grid-template-columns:1fr;
       gap:8px;
-      max-height:360px;
+      max-height:500px;
       overflow:auto;
       padding-right:4px;
     }
+.negocios-list::-webkit-scrollbar{ width:8px; }
+.negocios-list::-webkit-scrollbar-thumb{ background:rgba(75,175,140,.35); border-radius:999px; }
+.negocios-list::-webkit-scrollbar-track{ background:transparent; }
 
     .neg-card{
       border-radius:16px;
@@ -531,7 +534,7 @@
         grid-template-columns:1fr;
       }
       .negocios-list{
-        max-height:260px;
+        max-height:360px;
       }
     }
 
@@ -555,6 +558,7 @@
         grid-template-columns:1fr;
       }
     }
+    
   </style>
 </head>
 <body>
