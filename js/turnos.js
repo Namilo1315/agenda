@@ -19,15 +19,14 @@ import {
 // =======================
 //   CONFIG FIREBASE
 // =======================
-// ⚠️ IMPORTANTE: pegá acá la config REAL de tu proyecto Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyBs3V8rJ6cKI08IADuzecAI9XUL3740Gb4",
-    authDomain: "savia-74c89.firebaseapp.com",
-    projectId: "savia-74c89",
-    storageBucket: "savia-74c89.firebasestorage.app",
-    messagingSenderId: "627564458830",
-    appId: "1:627564458830:web:deb7ee624592236a91241f"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyBs3V8rJ6cKI08IADuzecAI9XUL3740Gb4",
+  authDomain: "savia-74c89.firebaseapp.com",
+  projectId: "savia-74c89",
+  storageBucket: "savia-74c89.firebasestorage.app",
+  messagingSenderId: "627564458830",
+  appId: "1:627564458830:web:deb7ee624592236a91241f",
+};
 
 let db = null;
 let firebaseOK = false;
@@ -73,6 +72,7 @@ const waFab = document.getElementById("wa-fab");
 const waBottom = document.getElementById("bk-wa-bottom");
 const igBottom = document.getElementById("bk-ig-bottom");
 const fbBottom = document.getElementById("bk-fb-bottom");
+// ESTA PUEDE NO EXISTIR EN EL HTML, LA PROTEGEMOS
 const linkSaviaEl = document.getElementById("bk-link-savia");
 
 const form = document.getElementById("booking-form");
@@ -160,7 +160,6 @@ async function cargarNegocioYConfig() {
   const snap = await getDoc(negocioRef);
 
   if (!snap.exists()) {
-    // si no existe el doc, creamos uno muy básico
     const data = {
       nombre: "Estética Bellezza",
       rubro: "Estética · Uñas · Masajes",
@@ -201,10 +200,8 @@ async function cargarNegocioYConfig() {
     state.negocio.colorPrincipal || "#4BAF8C"
   );
 
-  nombreNegocioEl.textContent =
-    state.negocio.nombre || "Nombre del negocio";
-  sloganEl.textContent =
-    state.negocio.slogan || "Slogan o frase corta.";
+  nombreNegocioEl.textContent = state.negocio.nombre || "Nombre del negocio";
+  sloganEl.textContent = state.negocio.slogan || "Slogan o frase corta.";
   rubroEl.textContent =
     state.negocio.rubro || "Estética · Peluquería · Bienestar";
 
@@ -251,12 +248,15 @@ async function cargarNegocioYConfig() {
     fbBottom.style.display = "none";
   }
 
-  linkSaviaEl.href = state.negocio.urlSavia || "#";
+  // 👇 ESTE ERA EL ERROR: protegemos porque el elemento no existe en el HTML
+  if (linkSaviaEl) {
+    linkSaviaEl.href =
+      state.negocio.urlSavia || "https://namilo1315.github.io/savia/";
+  }
 }
 
 async function cargarServicios() {
   if (!firebaseOK) {
-    // fallback mínimo para que no quede vacío
     console.warn("Firebase no OK: cargo un servicio demo.");
     state.servicios = [
       {
@@ -304,7 +304,6 @@ async function cargarHorariosOcupados(fechaIso) {
   }
 
   if (!firebaseOK) {
-    // sin Firebase: nadie está ocupado
     renderHorarios();
     return;
   }
@@ -329,9 +328,7 @@ function llenarServiciosPorCategoria(cat) {
 
   let lista = state.servicios;
   if (cat) {
-    lista = lista.filter(
-      (s) => (s.categoria || "General") === cat
-    );
+    lista = lista.filter((s) => (s.categoria || "General") === cat);
   }
 
   if (!lista.length) {
@@ -359,9 +356,7 @@ function llenarServiciosPorCategoria(cat) {
 
 function configurarCategoriasYServicios() {
   const setCat = new Set();
-  state.servicios.forEach((s) =>
-    setCat.add(s.categoria || "General")
-  );
+  state.servicios.forEach((s) => setCat.add(s.categoria || "General"));
   const categorias = Array.from(setCat);
 
   if (categorias.length) {
@@ -440,7 +435,6 @@ function renderHorarios() {
   }
 
   state.horariosBase.forEach((h) => {
-    // option oculto
     const opt = document.createElement("option");
     opt.value = h;
     opt.textContent = h + " hs";
@@ -450,7 +444,6 @@ function renderHorarios() {
     }
     selectHorario.appendChild(opt);
 
-    // botón visible
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "slot-btn";
@@ -480,7 +473,9 @@ function renderHorarios() {
 // =======================
 async function guardarTurnoEnFirestore(turno) {
   if (!firebaseOK) {
-    console.warn("Firebase no OK: turno sólo simulado, no se guarda en nube.");
+    console.warn(
+      "Firebase no OK: turno sólo simulado, no se guarda en nube."
+    );
     return "demo-doc-id";
   }
 
@@ -635,7 +630,7 @@ function configurarForm() {
 async function init() {
   console.log("Iniciando turnero Savia…");
 
-  // Siempre generamos horarios base aunque Firebase falle
+  // horarios base por defecto, en caso de que Firebase falle
   state.horariosBase = generarSlots(
     state.config.apertura,
     state.config.cierre,
