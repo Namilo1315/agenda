@@ -6,15 +6,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // ==================== FIREBASE INIT ====================
-  const firebaseConfig = {
-    apiKey: "AIzaSyBs3V8rJ6cKI08IADuzecAI9XUL3740Gb4",
-    authDomain: "savia-74c89.firebaseapp.com",
-    projectId: "savia-74c89",
-    storageBucket: "savia-74c89.firebasestorage.app",
-    messagingSenderId: "627564458830",
-    appId: "1:627564458830:web:deb7ee624592236a91241f"
-  };
-// TODO: reemplazá los valores de arriba con los de tu consola Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBs3V8rJ6cKI08IADuzecAI9XUL3740Gb4",
+  authDomain: "savia-74c89.firebaseapp.com",
+  projectId: "savia-74c89",
+  storageBucket: "savia-74c89.firebasestorage.app",
+  messagingSenderId: "627564458830",
+  appId: "1:627564458830:web:deb7ee624592236a91241f"
+};
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -108,6 +107,85 @@ function aplicarColorAccent() {
   const color = state.negocio.color || "#4BAF8C";
   document.documentElement.style.setProperty("--accent", color);
 }
+
+// ====== NUEVO: helpers WA + mensaje ======
+function escapeHtml(str = "") {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function normalizarWhatsAppAR(raw = "") {
+  let d = String(raw).replace(/\D/g, "");
+  if (!d) return "";
+
+  // limpia prefijos comunes
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.startsWith("0")) d = d.slice(1);
+
+  // si viene con país
+  if (d.startsWith("54")) {
+    // asegurar 9 para móviles
+    if (!d.startsWith("549")) d = "549" + d.slice(2);
+    return d;
+  }
+
+  // si alguien pone 9... (móvil) sin país
+  if (d.startsWith("9")) return "54" + d;
+
+  // heurística: si viene con "15" pegado después del código de área, lo sacamos (AR)
+  // ejemplo: 26115xxxxxxx -> 261xxxxxxx
+  if (d.length === 12) {
+    const tryRemove15 = (areaLen) => {
+      if (d.slice(areaLen, areaLen + 2) === "15") {
+        return d.slice(0, areaLen) + d.slice(areaLen + 2);
+      }
+      return d;
+    };
+    d = tryRemove15(2);
+    d = tryRemove15(3);
+    d = tryRemove15(4);
+  }
+
+  // asumimos AR móvil
+  return "549" + d;
+}
+
+function armarMensajeRecordatorio(turno, servicioNombre) {
+  const nombreNegocio = state.negocio.nombre || "Tu negocio";
+  const rubroTxt = state.negocio.rubro ? ` (${state.negocio.rubro})` : "";
+  const cliente = turno?.cliente || "hola";
+  const fecha = formateaFechaCorta(turno?.fecha || "");
+  const hora = turno?.hora || "";
+  const notas = (turno?.notas || "").trim();
+  const notasTxt = notas ? `\n Nota: ${notas}` : "";
+
+ return (
+`Hola ${cliente}
+
+Recordatorio de turno — ${nombreNegocio}${rubroTxt}
+${fecha} · ${hora}
+Servicio: ${servicioNombre}${notasTxt}
+
+Te esperamos.
+
+Si necesitás reprogramar, avisanos por este WhatsApp.
+¡Gracias!`
+);
+
+}
+
+function linkWhatsAppConMensaje(turno, servicioNombre) {
+  if (!turno?.whatsapp) return "";
+  const wa = normalizarWhatsAppAR(turno.whatsapp);
+  if (!wa) return "";
+  const msg = armarMensajeRecordatorio(turno, servicioNombre);
+  return `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+}
+// ==================== FIN NUEVO ======
 
 // ==================== DOM REFS ====================
 const tabButtons = document.querySelectorAll(".tab-btn");
@@ -250,6 +328,7 @@ function renderTurnosTabla() {
   filtrados.forEach((t) => {
     const serv = state.servicios.find((s) => s.id === t.servicioId);
     const servicioNombre = serv ? serv.nombre : "—";
+
     const tr = document.createElement("tr");
     const claseEstado =
       t.estado === "cancelado"
@@ -258,13 +337,25 @@ function renderTurnosTabla() {
         ? "badge-pendiente"
         : "badge-confirmado";
 
+    // ====== NUEVO: link con mensaje predeterminado ======
+    const urlWA = t.whatsapp ? linkWhatsAppConMensaje(t, servicioNombre) : "";
+    const waCell = t.whatsapp
+      ? (urlWA
+          ? `<a href="${urlWA}" target="_blank" rel="noopener" style="color:#16a34a;text-decoration:none;font-weight:600;">
+               <i class="fa-brands fa-whatsapp"></i> ${escapeHtml(t.whatsapp)}
+             </a>`
+          : `${escapeHtml(t.whatsapp)}`
+        )
+      : "";
+    // ================================================
+
     tr.innerHTML = `
-      <td>${formateaFechaCorta(t.fecha)}</td>
-      <td>${t.hora || ""}</td>
-      <td>${servicioNombre}</td>
-      <td>${t.cliente || ""}</td>
-      <td>${t.whatsapp ? `<a href="https://wa.me/54${String(t.whatsapp).replace(/[^\d]/g,"")}" target="_blank" style="color:#2563eb;text-decoration:none;">${t.whatsapp}</a>` : ""}</td>
-      <td><span class="badge-estado ${claseEstado}">${t.estado || ""}</span></td>
+      <td>${escapeHtml(formateaFechaCorta(t.fecha))}</td>
+      <td>${escapeHtml(t.hora || "")}</td>
+      <td>${escapeHtml(servicioNombre)}</td>
+      <td>${escapeHtml(t.cliente || "")}</td>
+      <td>${waCell}</td>
+      <td><span class="badge-estado ${claseEstado}">${escapeHtml(t.estado || "")}</span></td>
       <td>
         ${
           t.estado !== "confirmado"
@@ -489,11 +580,11 @@ function renderServiciosLista() {
     li.className = "svc-item";
     li.innerHTML = `
       <div class="svc-left">
-        <div class="svc-name">${s.nombre}</div>
-        <div class="svc-meta">${s.categoria || "General"} · ${s.duracionMin || 30} min</div>
+        <div class="svc-name">${escapeHtml(s.nombre)}</div>
+        <div class="svc-meta">${escapeHtml(s.categoria || "General")} · ${escapeHtml(s.duracionMin || 30)} min</div>
       </div>
       <div class="svc-right">
-        <div class="svc-precio">${formateaPrecio(s.precio || 0)}</div>
+        <div class="svc-precio">${escapeHtml(formateaPrecio(s.precio || 0))}</div>
         <div class="svc-actions">
           <button type="button" class="btn btn-outline" data-accion="editar-servicio" data-id="${s.id}">Editar</button>
           <button type="button" class="btn btn-outline" data-accion="borrar-servicio" data-id="${s.id}">Borrar</button>
@@ -587,9 +678,9 @@ function renderDashboard() {
   entries.forEach((item) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${item.servicio.nombre}</td>
-      <td>${item.cantidad}</td>
-      <td>${formateaPrecio(item.cantidad * (item.servicio.precio || 0))}</td>
+      <td>${escapeHtml(item.servicio.nombre)}</td>
+      <td>${escapeHtml(item.cantidad)}</td>
+      <td>${escapeHtml(formateaPrecio(item.cantidad * (item.servicio.precio || 0)))}</td>
     `;
     tablaResumenServicios.appendChild(tr);
   });
@@ -618,7 +709,6 @@ async function cargarNegocioDesdeFirebase() {
       state.config.duracionMin = d.duracionMin || state.config.duracionMin;
       state.config.aliasPago = d.aliasPago || state.config.aliasPago;
     } else {
-      // si no existe, lo creo con datos por defecto
       await setDoc(negocioRef, {
         nombre: state.negocio.nombre,
         rubro: state.negocio.rubro,
@@ -657,7 +747,7 @@ function escucharServiciosFirebase() {
 
 function escucharTurnosFirebase() {
   const q = query(turnosCol, orderBy("fecha"));
-    return onSnapshot(q, (snap) => {
+  return onSnapshot(q, (snap) => {
     state.turnos = snap.docs.map((d) => ({
       id: d.id,
       ...d.data()
