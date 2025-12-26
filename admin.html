@@ -452,7 +452,102 @@
       box-shadow:none;
     }
 
-    /* DASHBOARD TABLE REUSE agenda-table styles */
+    /* ===== DASHBOARD PRO (NUEVO, NO ROMPE NADA) ===== */
+    .dash-layout{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);
+      gap:16px;
+      align-items:start;
+    }
+    .dash-chip{
+      background:rgba(2,132,199,.08);
+      color:#075985;
+    }
+
+    .dash-stats{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:8px;
+      margin-top:10px;
+    }
+    .dash-stat{
+      border:1px solid var(--borde);
+      border-radius:14px;
+      padding:10px 10px;
+      background:linear-gradient(135deg,#ffffff,#f8fafc);
+      box-shadow:0 10px 22px rgba(148,163,184,.14);
+    }
+    .dash-stat .label{
+      font-size:.72rem;
+      color:#64748b;
+    }
+    .dash-stat .value{
+      margin-top:4px;
+      font-size:1rem;
+      font-weight:700;
+      color:#0f172a;
+      line-height:1.1;
+    }
+
+    .dash-top{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .dash-top-title{
+      font-size:.8rem;
+      color:#0f172a;
+      font-weight:600;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-bottom:2px;
+    }
+    .dash-top-item{
+      border:1px solid var(--borde);
+      border-radius:14px;
+      padding:10px 10px;
+      background:linear-gradient(135deg,#ffffff,#ecfdf5);
+      box-shadow:0 10px 22px rgba(148,163,184,.12);
+    }
+    .dash-top-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .dash-top-name{
+      font-size:.82rem;
+      font-weight:600;
+      color:#022c22;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width:70%;
+    }
+    .dash-top-meta{
+      font-size:.74rem;
+      color:#64748b;
+      margin-top:3px;
+    }
+    .dash-bar{
+      height:10px;
+      border-radius:999px;
+      background:#eef2ff;
+      overflow:hidden;
+      margin-top:8px;
+      border:1px solid rgba(148,163,184,.35);
+    }
+    .dash-bar > span{
+      display:block;
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background:linear-gradient(135deg,var(--accent),#2c7a62);
+      transition:width .2s ease;
+    }
 
     /* RESPONSIVE */
     @media (max-width:900px){
@@ -477,6 +572,12 @@
       }
       .svc-flex{
         grid-template-columns:1fr;
+      }
+      .dash-layout{
+        grid-template-columns:1fr;
+      }
+      .dash-stats{
+        grid-template-columns:repeat(2,minmax(0,1fr));
       }
     }
 
@@ -519,6 +620,9 @@
       .agenda-table-wrapper{
         max-height:none;
         overflow-x:auto;
+      }
+      .dash-stats{
+        grid-template-columns:1fr;
       }
     }
 
@@ -678,34 +782,109 @@
             </table>
           </div>
 
-          <p class="small-note">
-            
-          </p>
+          <p class="small-note"></p>
         </div>
 
       </div>
     </section>
 
-    <!-- DASHBOARD -->
+    <!-- DASHBOARD (MEJORADO + FILTRO MENSUAL) -->
     <section class="tab-panel" data-tab-panel="dashboard">
-      <div class="card">
-        <h2 class="card-title">Servicios más reservados</h2>
-        <p class="card-sub">Resumen armado con los turnos cargados en la agenda.</p>
 
-        <table>
-          <thead>
-            <tr>
-              <th>Servicio</th>
-              <th>Cantidad de turnos</th>
-              <th>Ingreso estimado</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-resumen-servicios"></tbody>
-        </table>
+      <div class="dash-layout">
 
-        <p class="small-note">
-         
-        </p>
+        <!-- Resumen del mes -->
+        <div class="card">
+          <div class="card-header-inline">
+            <div>
+              <h2 class="card-title">Resumen mensual</h2>
+              <p class="card-sub">Elegí un mes y mirá el rendimiento del negocio.</p>
+            </div>
+
+            <!-- NUEVO filtro mensual dashboard -->
+            <div class="agenda-filters">
+              <input type="month" id="dash-filtro-mes" class="input-small">
+              <button type="button" class="btn btn-outline btn-sm" id="dash-btn-mes-actual">
+                Mes actual
+              </button>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <span class="header-chip dash-chip">
+              <i class="fa-regular fa-calendar"></i>
+              Mes: <strong id="dash-mes-label">—</strong>
+            </span>
+            <span class="header-chip">
+              <i class="fa-solid fa-leaf"></i>
+              Savia Admin
+            </span>
+          </div>
+
+          <!-- Mini KPIs del mes (JS los llena) -->
+          <div class="dash-stats">
+            <div class="dash-stat">
+              <div class="label">Turnos del mes</div>
+              <div class="value" id="dash-turnos-mes">0</div>
+            </div>
+            <div class="dash-stat">
+              <div class="label">Ingresos del mes</div>
+              <div class="value" id="dash-ingresos-mes">$ 0</div>
+            </div>
+            <div class="dash-stat">
+              <div class="label">Cancelaciones del mes</div>
+              <div class="value" id="dash-cancelaciones-mes">0</div>
+            </div>
+          </div>
+
+          <!-- Top servicios (JS lo llena con barras) -->
+          <div class="dash-top" style="margin-top:12px;">
+            <div class="dash-top-title">
+              <i class="fa-solid fa-chart-simple"></i> Top servicios del mes
+            </div>
+
+            <!-- Contenedor dinámico -->
+            <div id="dash-top-servicios">
+              <!-- fallback si JS todavía no lo llena -->
+              <div class="dash-top-item">
+                <div class="dash-top-row">
+                  <div style="min-width:0;">
+                    <div class="dash-top-name">Todavía no hay datos</div>
+                    <div class="dash-top-meta">Cargá turnos para ver el top del mes.</div>
+                  </div>
+                  <div style="font-size:.78rem;color:#0f172a;font-weight:700;">0</div>
+                </div>
+                <div class="dash-bar"><span style="width:0%"></span></div>
+              </div>
+            </div>
+
+            <p class="small-note">
+              * Este panel es estimado: suma el precio del servicio por turno confirmado (según tus servicios cargados).
+            </p>
+          </div>
+        </div>
+
+        <!-- Detalle por servicio -->
+        <div class="card">
+          <h2 class="card-title">Detalle por servicio</h2>
+          <p class="card-sub">Tabla completa de turnos por servicio (según el mes seleccionado).</p>
+
+          <div class="agenda-table-wrapper" style="max-height:360px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Servicio</th>
+                  <th>Cantidad de turnos</th>
+                  <th>Ingreso estimado</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-resumen-servicios"></tbody>
+            </table>
+          </div>
+
+          <p class="small-note"></p>
+        </div>
+
       </div>
     </section>
 

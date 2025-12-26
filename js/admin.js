@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebas
 import {
   getFirestore, collection, doc, getDoc, getDocs,
   setDoc, addDoc, updateDoc, deleteDoc,
-  query, orderBy, serverTimestamp, onSnapshot
+  query, where, orderBy, serverTimestamp, onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // ==================== FIREBASE INIT ====================
@@ -56,11 +56,28 @@ function isoFechaOffset(dias) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function mesActualYYYYMM() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+// ===== NUEVO: calcular mes siguiente (para rango [desde, hasta)) =====
+function siguienteMesYYYYMM(yyyyMm) {
+  const [y, m] = String(yyyyMm).split("-").map(Number);
+  const d = new Date(y, (m - 1), 1);
+  d.setMonth(d.getMonth() + 1);
+  const yy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${yy}-${mm}`;
+}
+
 const diasCortos = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 
 function formateaFechaCorta(iso) {
   if (!iso) return "-";
-  const partes = iso.split("-");
+  const partes = String(iso).split("-");
   if (partes.length !== 3) return iso;
   const y = Number(partes[0]);
   const m = Number(partes[1]);
@@ -72,6 +89,19 @@ function formateaFechaCorta(iso) {
   const yyyy = fecha.getFullYear();
   const dia = diasCortos[fecha.getDay()];
   return `${dia} ${dd}/${mm}/${yyyy}`;
+}
+
+function formatearMesLindo(yyyyMm) {
+  // "2025-12" -> "diciembre 2025"
+  if (!yyyyMm || !/^\d{4}-\d{2}$/.test(yyyyMm)) return "—";
+  const [y, m] = yyyyMm.split("-");
+  const fecha = new Date(Number(y), Number(m) - 1, 1);
+  try {
+    const mes = fecha.toLocaleDateString("es-AR", { month: "long" });
+    return `${mes} ${y}`;
+  } catch {
+    return `${m}/${y}`;
+  }
 }
 
 function generarSlots(config) {
@@ -163,7 +193,7 @@ function armarMensajeRecordatorio(turno, servicioNombre) {
   const notas = (turno?.notas || "").trim();
   const notasTxt = notas ? `\n Nota: ${notas}` : "";
 
- return (
+  return (
 `Hola ${cliente}
 
 Recordatorio de turno — ${nombreNegocio}${rubroTxt}
@@ -174,8 +204,7 @@ Te esperamos.
 
 Si necesitás reprogramar, avisanos por este WhatsApp.
 ¡Gracias!`
-);
-
+  );
 }
 
 function linkWhatsAppConMensaje(turno, servicioNombre) {
@@ -238,6 +267,15 @@ const listaServicios = document.getElementById("lista-servicios");
 const tablaResumenServicios = document.getElementById("tabla-resumen-servicios");
 const btnSalir = document.getElementById("btn-salir");
 
+// ====== NUEVO: refs dashboard pro ======
+const dashFiltroMes = document.getElementById("dash-filtro-mes");
+const dashBtnMesActual = document.getElementById("dash-btn-mes-actual");
+const dashMesLabel = document.getElementById("dash-mes-label");
+const dashTurnosMes = document.getElementById("dash-turnos-mes");
+const dashIngresosMes = document.getElementById("dash-ingresos-mes");
+const dashCancelacionesMes = document.getElementById("dash-cancelaciones-mes");
+const dashTopServicios = document.getElementById("dash-top-servicios");
+
 // ==================== TABS ====================
 tabButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -257,16 +295,27 @@ function renderHeader() {
   aplicarColorAccent();
 }
 
+// ===== mes para KPI Ganancias (toma el filtro mes de Agenda si existe) =====
+function obtenerMesKpiPref() {
+  if (filtroMes && filtroMes.value) return filtroMes.value; // "yyyy-mm"
+  return mesActualYYYYMM();
+}
+
 function calcularKpis() {
   const hoy = new Date();
   const ms7 = 7 * 24 * 60 * 60 * 1000;
+
   let turnos7 = 0;
   let cancelaciones = 0;
   let ingresos = 0;
 
+  const mesKpi = obtenerMesKpiPref(); // <-- mensual
+
   state.turnos.forEach((t) => {
     if (!t.fecha) return;
-    const partes = t.fecha.split("-");
+
+    // KPI Turnos últimos 7 días + cancelaciones últimos 7 días
+    const partes = String(t.fecha).split("-");
     let fecha;
     if (partes.length === 3) {
       fecha = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
@@ -280,7 +329,9 @@ function calcularKpis() {
         if (t.estado === "cancelado") cancelaciones++;
       }
     }
-    if (t.estado === "confirmado") {
+
+    // ingresos SOLO DEL MES (según filtroMes de Agenda o mes actual)
+    if (t.estado === "confirmado" && t.fecha && String(t.fecha).startsWith(mesKpi)) {
       const serv = state.servicios.find((s) => s.id === t.servicioId);
       if (serv) ingresos += serv.precio || 0;
     }
@@ -300,7 +351,7 @@ function renderKpis() {
 function pasaFiltros(turno) {
   if (filtroMes && filtroMes.value) {
     const pref = filtroMes.value; // yyyy-mm
-    if (!turno.fecha || !turno.fecha.startsWith(pref)) return false;
+    if (!turno.fecha || !String(turno.fecha).startsWith(pref)) return false;
   }
   if (filtroFecha && filtroFecha.value) {
     if (turno.fecha !== filtroFecha.value) return false;
@@ -337,7 +388,6 @@ function renderTurnosTabla() {
         ? "badge-pendiente"
         : "badge-confirmado";
 
-    // ====== NUEVO: link con mensaje predeterminado ======
     const urlWA = t.whatsapp ? linkWhatsAppConMensaje(t, servicioNombre) : "";
     const waCell = t.whatsapp
       ? (urlWA
@@ -347,7 +397,6 @@ function renderTurnosTabla() {
           : `${escapeHtml(t.whatsapp)}`
         )
       : "";
-    // ================================================
 
     tr.innerHTML = `
       <td>${escapeHtml(formateaFechaCorta(t.fecha))}</td>
@@ -469,14 +518,6 @@ formNuevoTurno?.addEventListener("submit", async (e) => {
   }
 });
 
-filtroMes?.addEventListener("change", renderTurnosTabla);
-filtroFecha?.addEventListener("change", renderTurnosTabla);
-btnLimpiarFiltros?.addEventListener("click", () => {
-  if (filtroMes) filtroMes.value = "";
-  if (filtroFecha) filtroFecha.value = "";
-  renderTurnosTabla();
-});
-
 // ==================== NEGOCIO & HORARIO ====================
 function rellenarFormNegocio() {
   if (cfgNombre) cfgNombre.value = state.negocio.nombre || "";
@@ -519,6 +560,8 @@ formNegocio?.addEventListener("submit", async (e) => {
     renderHeader();
     renderServiciosEnSelect();
     renderTurnosTabla();
+    renderKpis();
+    renderDashboard();
     alert("Datos del negocio guardados.");
   } catch (err) {
     console.error("Error guardando negocio", err);
@@ -651,13 +694,46 @@ formServicio?.addEventListener("submit", async (e) => {
 
 btnLimpiarServicio?.addEventListener("click", limpiarServicioForm);
 
-// ==================== DASHBOARD RESUMEN ====================
+// ==================== DASHBOARD (PRO + FILTRO MENSUAL) ====================
+function obtenerMesDashboardPref() {
+  if (dashFiltroMes && dashFiltroMes.value) return dashFiltroMes.value; // "yyyy-mm"
+  return mesActualYYYYMM();
+}
+
 function renderDashboard() {
   if (!tablaResumenServicios) return;
+
+  const mesDash = obtenerMesDashboardPref();
+
+  if (dashMesLabel) dashMesLabel.textContent = formatearMesLindo(mesDash);
+
+  const turnosDelMes = state.turnos.filter((t) => t?.fecha && String(t.fecha).startsWith(mesDash));
+
+  let totalNoCancel = 0;
+  let totalCancel = 0;
+  let ingresosMes = 0;
+
+  turnosDelMes.forEach((t) => {
+    if (t.estado === "cancelado") {
+      totalCancel++;
+      return;
+    }
+    totalNoCancel++;
+
+    if (t.estado === "confirmado") {
+      const serv = state.servicios.find((s) => s.id === t.servicioId);
+      if (serv) ingresosMes += serv.precio || 0;
+    }
+  });
+
+  if (dashTurnosMes) dashTurnosMes.textContent = String(totalNoCancel);
+  if (dashCancelacionesMes) dashCancelacionesMes.textContent = String(totalCancel);
+  if (dashIngresosMes) dashIngresosMes.textContent = formateaPrecio(ingresosMes);
+
   tablaResumenServicios.innerHTML = "";
   const conteo = {};
 
-  state.turnos.forEach((t) => {
+  turnosDelMes.forEach((t) => {
     if (t.estado === "cancelado") return;
     const serv = state.servicios.find((s) => s.id === t.servicioId);
     if (!serv) return;
@@ -668,22 +744,64 @@ function renderDashboard() {
   });
 
   const entries = Object.values(conteo).sort((a, b) => b.cantidad - a.cantidad);
+
   if (!entries.length) {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="3">Todavía no hay datos para el resumen.</td>`;
+    tr.innerHTML = `<td colspan="3">Todavía no hay datos para el mes seleccionado.</td>`;
     tablaResumenServicios.appendChild(tr);
-    return;
+  } else {
+    entries.forEach((item) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(item.servicio.nombre)}</td>
+        <td>${escapeHtml(item.cantidad)}</td>
+        <td>${escapeHtml(formateaPrecio(item.cantidad * (item.servicio.precio || 0)))}</td>
+      `;
+      tablaResumenServicios.appendChild(tr);
+    });
   }
 
-  entries.forEach((item) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(item.servicio.nombre)}</td>
-      <td>${escapeHtml(item.cantidad)}</td>
-      <td>${escapeHtml(formateaPrecio(item.cantidad * (item.servicio.precio || 0)))}</td>
-    `;
-    tablaResumenServicios.appendChild(tr);
-  });
+  if (dashTopServicios) {
+    dashTopServicios.innerHTML = "";
+
+    if (!entries.length) {
+      dashTopServicios.innerHTML = `
+        <div class="dash-top-item">
+          <div class="dash-top-row">
+            <div style="min-width:0;">
+              <div class="dash-top-name">Todavía no hay datos</div>
+              <div class="dash-top-meta">Cargá turnos para ver el top del mes.</div>
+            </div>
+            <div style="font-size:.78rem;color:#0f172a;font-weight:700;">0</div>
+          </div>
+          <div class="dash-bar"><span style="width:0%"></span></div>
+        </div>
+      `;
+      return;
+    }
+
+    const max = Math.max(...entries.map((e) => e.cantidad || 0), 1);
+    const topN = entries.slice(0, 5);
+
+    topN.forEach((item) => {
+      const total = item.cantidad * (item.servicio.precio || 0);
+      const pct = Math.round((item.cantidad / max) * 100);
+
+      const div = document.createElement("div");
+      div.className = "dash-top-item";
+      div.innerHTML = `
+        <div class="dash-top-row">
+          <div style="min-width:0;">
+            <div class="dash-top-name">${escapeHtml(item.servicio.nombre)}</div>
+            <div class="dash-top-meta">${escapeHtml(item.cantidad)} turnos · ${escapeHtml(formateaPrecio(total))}</div>
+          </div>
+          <div style="font-size:.78rem;color:#0f172a;font-weight:700;">${escapeHtml(item.cantidad)}</div>
+        </div>
+        <div class="dash-bar"><span style="width:${pct}%"></span></div>
+      `;
+      dashTopServicios.appendChild(div);
+    });
+  }
 }
 
 // ==================== SALIR ====================
@@ -740,34 +858,133 @@ function escucharServiciosFirebase() {
     }));
     renderServiciosLista();
     renderServiciosEnSelect();
-    renderDashboard();
     renderTurnosTabla();
+    renderKpis();
+    renderDashboard();
   });
 }
 
-function escucharTurnosFirebase() {
-  const q = query(turnosCol, orderBy("fecha"));
-  return onSnapshot(q, (snap) => {
+// ==================== TURNOS POR MES (listener liviano) ====================
+let unsubTurnos = null;
+
+function escucharTurnosPorMes(yyyyMm) {
+  const mes = yyyyMm || mesActualYYYYMM();
+
+  // desconecta listener anterior
+  if (typeof unsubTurnos === "function") {
+    unsubTurnos();
+    unsubTurnos = null;
+  }
+
+  // rango [desde, hasta)
+  const desde = `${mes}-01`;
+  const hasta = `${siguienteMesYYYYMM(mes)}-01`;
+
+  const q = query(
+    turnosCol,
+    where("fecha", ">=", desde),
+    where("fecha", "<", hasta),
+    orderBy("fecha")
+  );
+
+  unsubTurnos = onSnapshot(q, (snap) => {
     state.turnos = snap.docs.map((d) => ({
       id: d.id,
       ...d.data()
     }));
     renderTurnosTabla();
-    renderDashboard();
     renderKpis();
+    renderDashboard();
   });
 }
+
+// ==================== SYNC MES (Agenda <-> Dashboard) ====================
+function syncMesUI(nuevoMes) {
+  if (filtroMes && filtroMes.value !== nuevoMes) filtroMes.value = nuevoMes;
+  if (dashFiltroMes && dashFiltroMes.value !== nuevoMes) dashFiltroMes.value = nuevoMes;
+}
+
+// ====== CAMBIO: filtros ======
+filtroMes?.addEventListener("change", () => {
+  const mes = filtroMes.value || mesActualYYYYMM();
+
+  // sincroniza dashboard al mismo mes (así siempre hay datos)
+  syncMesUI(mes);
+
+  // limpia estado visual rápido
+  state.turnos = [];
+  renderTurnosTabla();
+  renderKpis();
+  renderDashboard();
+
+  // re-escucha el mes seleccionado
+  escucharTurnosPorMes(mes);
+});
+
+filtroFecha?.addEventListener("change", () => {
+  renderTurnosTabla();
+});
+
+btnLimpiarFiltros?.addEventListener("click", () => {
+  if (filtroMes) filtroMes.value = "";
+  if (filtroFecha) filtroFecha.value = "";
+
+  // vuelve a mes actual
+  const mes = mesActualYYYYMM();
+  syncMesUI(mes);
+
+  state.turnos = [];
+  renderTurnosTabla();
+  renderKpis();
+  renderDashboard();
+
+  escucharTurnosPorMes(mes);
+});
+
+// listeners del filtro del dashboard (sincroniza con agenda + recarga mes)
+dashFiltroMes?.addEventListener("change", () => {
+  const mes = dashFiltroMes.value || mesActualYYYYMM();
+  syncMesUI(mes);
+
+  state.turnos = [];
+  renderTurnosTabla();
+  renderKpis();
+  renderDashboard();
+
+  escucharTurnosPorMes(mes);
+});
+
+dashBtnMesActual?.addEventListener("click", () => {
+  const mes = mesActualYYYYMM();
+  syncMesUI(mes);
+
+  state.turnos = [];
+  renderTurnosTabla();
+  renderKpis();
+  renderDashboard();
+
+  escucharTurnosPorMes(mes);
+});
 
 // ==================== INIT ====================
 async function initAdmin() {
   const hoy = isoFechaOffset(0);
+  const mesIni = hoy.slice(0, 7);
+
+  // agenda default
   if (ntFecha) ntFecha.value = hoy;
   if (filtroFecha) filtroFecha.value = hoy;
-  if (filtroMes) filtroMes.value = hoy.slice(0, 7);
+  if (filtroMes) filtroMes.value = mesIni;
+
+  // dashboard default
+  if (dashFiltroMes) dashFiltroMes.value = mesIni;
+  if (dashMesLabel) dashMesLabel.textContent = formatearMesLindo(mesIni);
 
   await cargarNegocioDesdeFirebase();
   escucharServiciosFirebase();
-  escucharTurnosFirebase();
+
+  // ✅ ahora escucha SOLO el mes seleccionado
+  escucharTurnosPorMes(mesIni);
 }
 
 initAdmin().catch((err) => console.error("Error inicializando admin", err));
